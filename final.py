@@ -1,6 +1,7 @@
 # pete9348@atlas.cselabs.umn.edu is the server to be run on
 
 import numpy as np
+from scipy.spatial import distance
 
 prcro = 0.8
 prmut = 0.05
@@ -154,8 +155,12 @@ def calculatePI(matrix, coords):
     PI = np.zeros(np.shape(matrix)[0])
     for j in range(0,np.size(PI)):
         for k in range(0,od-1):
-            PI[j] += np.sqrt(np.square(coords[x[j][k]][0]-coords[x[j][k+1]][0])+np.square(coords[x[j][k]][1]-coords[x[j][k+1]][1]))
-        PI[j] += np.sqrt(np.square(coords[x[j][od-1]][0]-coords[x[j][0]][0])+np.square(coords[x[j][od-1]][1]-coords[x[j][0]][1]))
+            old = coords[x[j][k]]
+            new = coords[x[j][k+1]]
+            PI[j] += dist(old[0],old[1],old[2],old[3]) # distance of
+            PI[j] += dist(old[2],old[3],new[0],new[1])
+        last = coords[x[j][od-1]]
+        PI[j] += dist(last[0],last[1],last[2],last[3])
     return PI ;
 
 def makeEdgeTable(p1,p2):
@@ -243,6 +248,13 @@ def reciprocalMutation(array):
     array[i2] = temp
     return array;
 
+def dist(x1,y1,x2,y2):
+    if x1 > x2: # traveling west, apply 5% penalty in the x direction
+        return np.sqrt( (((x2-x1)*1.05)**2) + (y2-y1)**2 )
+    else:
+        return np.sqrt( (x2-x1)**2 + (y2-y1)**2 )
+
+
 
 ### CREATE INITIAL GENERATION
 x = createIndividuals(npop,od)
@@ -295,22 +307,20 @@ for h in range(0,ngen):
 
     print("Generation: %d" % (h))
 
-best = endX[np.argmin(endPI)]
-print("############")
-print("Min PI is: %f" % (np.amin(endPI)))
-print(best)
-
 ### PRINT LINESTRING TO TXT FILE ###
-linestring = "LINESTRING("
+linestring = "\nLINESTRING("
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring[:-1]+')'
-f1=open('./linestring.txt', 'w+')
+f1=open('./linestring.txt', 'a+')
+f1.write("\n"+str(endX[np.argmin(endPI)])) # Best individual
+f1.write("\n"+str(np.amin(endPI))) # Best Individuals PI
 f1.write(linestring)
+f1.close()
+
+
 
 
 ### TODOS
 # change pi function to incorporate:
-#   all both coords instead of one
-#   currents
 #   land in the way
