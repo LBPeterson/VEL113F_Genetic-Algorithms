@@ -1,7 +1,7 @@
 # pete9348@atlas.cselabs.umn.edu is the server to be run on
 
 import numpy as np
-from scipy.spatial import distance
+import matplotlib.pyplot as plt
 
 prcro = 0.8
 prmut = 0.05
@@ -340,14 +340,22 @@ linestring = "\nLINESTRING("
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring[:-1]+')'
-f1=open('./linestring.txt', 'a+')
+f1=open('./output/'+str(bestPI)+'.txt', 'a+')
 f1.write("\n"+str(bestPI)) # Best Individuals PI
 f1.write("\n"+str(best)) # Best individual
 f1.write(linestring)
 f1.close()
+
+plt.plot(np.arange(1,endPI.size+1),endPI)
+plt.ylabel('Performance Index')
+plt.xlabel('Generation')
+plt.xticks(np.arange(1,endPI.size+1))
+plt.savefig('./output/'+str(bestPI)+'.png')
 
 
 
 
 ### TODOS
 # change pi function to incorporate:
+#   start and end points
+# Make graph
