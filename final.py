@@ -142,6 +142,17 @@ coords = np.array([         #[lng from, lat from, lng to, lat to]
 [-21.2166666667 ,67.0333333333  ,-21.1666666667 ,67.1           ],
 [-21.7166666667 ,67.1           ,-21.65         ,67.1666666667  ]])
 
+intLines = np.array([ #first point is the one to add to path
+[-21.21797313514038663, 65.9769674260938217 ,-22.45524153888934293 , 66.4484616330975939 ],
+[-20.4926778639772067 , 66.07750828396038401, -20.24522418322741757, 65.6729554553719197 ],
+[-20.13429667116716715, 66.16041487924540832, -19.61379065303829705, 65.72211978707083802],
+[-19.51139602652114036, 66.10517392670715253, -19.37486985783160165, 65.75017176855935475],
+[-18.78610075535796398, 66.21897661794660905, -18.1376014540826489 , 65.77819329403662607],
+[-18.35092359266005602, 66.16386344331193925, -18.06080548419478404, 65.85160508785446609],
+[-18.21439742397051731, 66.19832325644730986, -17.47203638172114637, 66.05673926993483747],
+[-16.61874782741152146, 66.51655896001079782, -16.48222165872198275, 66.27053619081542024],
+[-16.02997872493788023, 66.56072257371347689, -15.58626867669688032, 66.3151359445005113 ]])
+
 
 #### FUNCTIONS ####
 def createIndividuals(rows, cols):
@@ -249,11 +260,26 @@ def reciprocalMutation(array):
     return array;
 
 def dist(x1,y1,x2,y2):
-    if x1 > x2: # traveling west, apply 5% penalty in the x direction
-        return np.sqrt( (((x2-x1)*1.05)**2) + (y2-y1)**2 )
-    else:
-        return np.sqrt( (x2-x1)**2 + (y2-y1)**2 )
+    for i in intLines:
+        if linesIntersect(i,[x1,y1,x2,y2]):
+            return dist(x1,y1,i[0],i[1]) + dist(i[0],i[1],x2,y2)
+            break
+        else:
+            if x1 > x2: # traveling west, apply 5% penalty in the x direction
+                return np.sqrt( (((x2-x1)*1.05)**2) + (y2-y1)**2 )
+            else:
+                return np.sqrt( (x2-x1)**2 + (y2-y1)**2 )
 
+
+def linesIntersect(l1,l2):
+     a = np.array([l1[0], l1[1]])
+     b = np.array([l1[2], l1[3]])
+     c = np.array([l2[0], l2[1]])
+     d = np.array([l2[2], l2[3]])
+     if (np.cross(b-a,c-b) * np.cross(b-a,d-b) < 0) and (np.cross(d-c,a-d)*np.cross(d-c,b-d) < 0):
+         return True
+     else:
+         return False
 
 
 ### CREATE INITIAL GENERATION
@@ -308,13 +334,15 @@ for h in range(0,ngen):
     print("Generation: %d" % (h))
 
 ### PRINT LINESTRING TO TXT FILE ###
+best = endX[np.argmin(endPI)]
+bestPI = np.amin(endPI)
 linestring = "\nLINESTRING("
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring[:-1]+')'
 f1=open('./linestring.txt', 'a+')
-f1.write("\n"+str(endX[np.argmin(endPI)])) # Best individual
-f1.write("\n"+str(np.amin(endPI))) # Best Individuals PI
+f1.write("\n"+str(bestPI)) # Best Individuals PI
+f1.write("\n"+str(best)) # Best individual
 f1.write(linestring)
 f1.close()
 
@@ -323,4 +351,3 @@ f1.close()
 
 ### TODOS
 # change pi function to incorporate:
-#   land in the way
