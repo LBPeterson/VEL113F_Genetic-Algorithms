@@ -1,12 +1,12 @@
-# pete9348@atlas.cselabs.umn.edu is the server to be run on
-
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 prcro = 0.8
 prmut = 0.05
-ngen = 200
-npop = 200
+ngen = 1000
+npop = 500
 od = 132
 coords = np.array([         #[lng from, lat from, lng to, lat to]
 [-18.2666666667 ,65.9666666667  ,-18.35         ,66.0333333333  ],
@@ -168,10 +168,13 @@ def calculatePI(matrix, coords):
         for k in range(0,od-1):
             old = coords[x[j][k]]
             new = coords[x[j][k+1]]
-            PI[j] += dist(old[0],old[1],old[2],old[3]) # distance of
+            PI[j] += dist(old[0],old[1],old[2],old[3])
             PI[j] += dist(old[2],old[3],new[0],new[1])
+        first = coords[x[j][0]]
         last = coords[x[j][od-1]]
         PI[j] += dist(last[0],last[1],last[2],last[3])
+        PI[j] += dist(-18.18453232456968394,65.8830032158910228,first[0],first[1])
+        PI[j] += dist(last[2],last[3],-14.98470024590859495,66.65726869659157217)
     return PI ;
 
 def makeEdgeTable(p1,p2):
@@ -251,13 +254,12 @@ def recombinateEdges(eT):
         current = nextIndex
     return child
 
-def reciprocalMutation(array):
+def reciprocalMutation(a):
+    new = np.copy(a)
     i1 = np.random.randint(od)
     i2 = np.random.randint(od)
-    temp = array[i1]
-    array[i1] = array[i2]
-    array[i2] = temp
-    return array;
+    new[i1], new[i2] = new[i2], new[i1]
+    return new;
 
 def dist(x1,y1,x2,y2):
     for i in intLines:
@@ -281,6 +283,20 @@ def linesIntersect(l1,l2):
      else:
          return False
 
+def orderCrossover(a1,a2):
+    p1 = np.copy(a1)
+    p2 = np.copy(a2)
+    s1 = np.random.randint(0,od-1)
+    s2 = np.random.randint(s1+1,od)
+    child = np.empty(od) * np.nan
+    child[s1:s2] = p2[s1:s2]
+    toAdd = np.concatenate([p1[s2:],p1[:s2]])
+    toAdd = np.delete(toAdd,np.where(np.in1d(toAdd,child)))
+    avail = np.where(np.isnan(child))[0]
+    child[avail] = toAdd
+    return child
+
+
 
 ### CREATE INITIAL GENERATION
 x = createIndividuals(npop,od)
@@ -291,31 +307,31 @@ endPI = np.zeros([ngen])
 for h in range(0,ngen):
     PI = calculatePI(x,coords)
     ng = np.zeros(x.shape)
+
     ### EDGE RECOMBINATION
     for i in range(0,npop):
         p1 = np.random.randint(npop)
         p2 = np.random.randint(npop)
         if np.random.rand() < prcro:
-            eT = makeEdgeTable(x[p1],x[p2])
-            ng[i] = recombinateEdges(eT)
+            #eT = makeEdgeTable(x[p1],x[p2])
+            #ng[i] = recombinateEdges(eT)
+            ng[i] = orderCrossover(x[p1],x[p2])
         elif PI[p1]<PI[p2]:
             ng[i] = x[p1]
         else:
             ng[i] = x[p2]
         #This is a quick fix for the edgerecombo missing the last element sometimes
-        if np.unique(ng[i]).size != od:
-            for j in range(0,od):
-                if j not in ng[i]:
-                    index = np.amax(np.where(ng[i]==od-1)[0]) # finds the last instance of od-1
-                    #if np.where(ng[i]==od-1)[0].size >=3:
-                    #    print(np.where(ng[i]==od-1)[0].size)
-                    ng[i][index] = j
-
+        #if np.unique(ng[i]).size != od:
+        #    for j in range(0,od):
+        #        if j not in ng[i]:
+        #            index = np.amax(np.where(ng[i]==od-1)[0]) # finds the last instance of od-1
+        #            ng[i][index] = j
 
     ### RECIPROCAL MUTATION
-    for i in range(0,npop):
-        if np.random.rand() < prmut:
-            ng[i] = reciprocalMutation(ng[i])
+    vals = np.random.rand(1,npop)[0]
+    toMut = np.where(vals<prmut)[0]
+    for i in range(0,toMut.size):
+        ng[i] = reciprocalMutation(ng[i])
 
 
     ### SWAP BEST OLD VALUE
@@ -333,29 +349,33 @@ for h in range(0,ngen):
 
     print("Generation: %d" % (h))
 
-### PRINT LINESTRING TO TXT FILE ###
-best = endX[np.argmin(endPI)]
+### PRINT TO TXT FILE
+#   prints the PI, array of points, and LINESTRING
+#   LINESTRING is in WKT format for gis software
+#   will be named PI.txt (205.94382398.txt)
 bestPI = np.amin(endPI)
-linestring = "\nLINESTRING("
+best = endX[np.argmin(endPI)]
+linestring = "\nLINESTRING(-18.18453232456968394 65.88300321589102282,"
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
-linestring = linestring[:-1]+')'
+linestring = linestring +'-14.98470024590859495 66.65726869659157217)\n'
 f1=open('./output/'+str(bestPI)+'.txt', 'a+')
-f1.write("\n"+str(bestPI)) # Best Individuals PI
-f1.write("\n"+str(best)) # Best individual
+f1.write(str(bestPI))
+f1.write("\n"+str(best))
 f1.write(linestring)
 f1.close()
 
+### PLOT PI VALUES OVER GENERATIONS
+#   will be named PI.png (205.94382398.png)
 plt.plot(np.arange(1,endPI.size+1),endPI)
 plt.ylabel('Performance Index')
 plt.xlabel('Generation')
-plt.xticks(np.arange(1,endPI.size+1))
+plt.xticks(np.arange(1,endPI.size+1,50))
 plt.savefig('./output/'+str(bestPI)+'.png')
 
 
 
 
 ### TODOS
-# change pi function to incorporate:
-#   start and end points
-# Make graph
+# Comment
+# lin kernighan heuristic
