@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 prcro = 0.8
 prmut = 0.05
-ngen = 1000
-npop = 100
+ngen = 50000
+npop = 50
 od = 132
 coords = np.array([         #[lng from, lat from, lng to, lat to]
 [-18.2666666667 ,65.9666666667  ,-18.35         ,66.0333333333  ],
@@ -313,19 +313,19 @@ for h in range(0,ngen):
         p1 = np.random.randint(npop)
         p2 = np.random.randint(npop)
         if np.random.rand() < prcro:
-            #eT = makeEdgeTable(x[p1],x[p2])
-            #ng[i] = recombinateEdges(eT)
-            ng[i] = orderCrossover(x[p1],x[p2])
+            eT = makeEdgeTable(x[p1],x[p2])
+            ng[i] = recombinateEdges(eT)
+            #ng[i] = orderCrossover(x[p1],x[p2])
         elif PI[p1]<PI[p2]:
             ng[i] = x[p1]
         else:
             ng[i] = x[p2]
         #This is a quick fix for the edgerecombo missing the last element sometimes
-        #if np.unique(ng[i]).size != od:
-        #    for j in range(0,od):
-        #        if j not in ng[i]:
-        #            index = np.amax(np.where(ng[i]==od-1)[0]) # finds the last instance of od-1
-        #            ng[i][index] = j
+        if np.unique(ng[i]).size != od:
+            for j in range(0,od):
+                if j not in ng[i]:
+                    index = np.amax(np.where(ng[i]==od-1)[0]) # finds the last instance of od-1
+                    ng[i][index] = j
 
     ### RECIPROCAL MUTATION
     vals = np.random.rand(1,npop)[0]
@@ -359,7 +359,7 @@ linestring = "\nLINESTRING(-18.18453232456968394 65.88300321589102282,"
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring +'-14.98470024590859495 66.65726869659157217)\n'
-f1=open('./output/'+str(bestPI)+'.txt', 'a+')
+f1=open('./ERoutput/ER_RUN-'+str(bestPI)+'.txt', 'a+')
 f1.write(str(bestPI))
 f1.write("\n"+str(best))
 f1.write(linestring)
@@ -370,8 +370,8 @@ f1.close()
 plt.plot(np.arange(1,endPI.size+1),endPI)
 plt.ylabel('Performance Index')
 plt.xlabel('Generation')
-plt.xticks(np.arange(1,endPI.size+1,50))
-plt.savefig('./output/'+str(bestPI)+'.png')
+plt.xticks(np.arange(1,endPI.size+1,ngen/10))
+plt.savefig('./ERoutput/ER_RUN-'+str(bestPI)+'.png')
 
 
 
