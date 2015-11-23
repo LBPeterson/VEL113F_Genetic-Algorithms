@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 prcro = 0.8
 prmut = 0.05
-ngen = 50000
+ngen = 5000
 npop = 50
 od = 132
 coords = np.array([         #[lng from, lat from, lng to, lat to]
@@ -296,6 +296,26 @@ def orderCrossover(a1,a2):
     child[avail] = toAdd
     return child
 
+# r2 will always be after r1 since this is
+# not a complete ring - start and end points are not the same
+# new array will also not start with r1 in this implementation
+def linKernighan(array):
+    a = np.copy(array)
+    b = np.copy(array)
+    r1 = np.random.randint(0,od-4)
+    r2 = np.random.randint(r1+3,od-1)
+    b[r1+1:r2+1] = a[r1+1:r2+1][::-1]
+    x1 = dist(coords[a[r1]][2], coords[a[r1]][3], coords[a[r1+1]][0], coords[a[r1+1]][1])
+    x2 = dist(coords[a[r2]][2], coords[a[r2]][3], coords[a[r2+1]][0], coords[a[r2+1]][1])
+    y1 = dist(coords[b[r1]][2], coords[b[r1]][3], coords[b[r1+1]][0], coords[b[r1+1]][1])
+    y2 = dist(coords[b[r2]][2], coords[b[r2]][3], coords[b[r2+1]][0], coords[b[r2+1]][1])
+    if x1 + x2 > y1 + y2:
+        a = np.copy(b)
+
+    return a;
+
+
+
 
 
 ### CREATE INITIAL GENERATION
@@ -333,6 +353,11 @@ for h in range(0,ngen):
     for i in range(0,toMut.size):
         ng[i] = reciprocalMutation(ng[i])
 
+    ### LIN KERNIGHAN
+    for i in range(0,npop):
+        array = np.copy(ng[i])
+        ng[i] = np.copy(linKernighan(array))
+
 
     ### SWAP BEST OLD VALUE
     PI = calculatePI(x,coords)
@@ -359,7 +384,7 @@ linestring = "\nLINESTRING(-18.18453232456968394 65.88300321589102282,"
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring +'-14.98470024590859495 66.65726869659157217)\n'
-f1=open('./OXoutput/OX5-'+str(bestPI)+'.txt', 'a+')
+f1=open('./OXoutput/OX_LIN-'+str(bestPI)+'.txt', 'a+')
 f1.write(str(bestPI))
 f1.write("\n"+str(best))
 f1.write(linestring)
@@ -371,11 +396,10 @@ plt.plot(np.arange(1,endPI.size+1),endPI)
 plt.ylabel('Performance Index')
 plt.xlabel('Generation')
 plt.xticks(np.arange(1,endPI.size+1,ngen/10))
-plt.savefig('./OXoutput/OX5-'+str(bestPI)+'.png')
+plt.savefig('./OXoutput/OX_LIN-'+str(bestPI)+'.png')
 
 
 
 
 ### TODOS
 # Comment
-# lin kernighan heuristic
