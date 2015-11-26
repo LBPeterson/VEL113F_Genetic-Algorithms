@@ -1,3 +1,6 @@
+# Luke Peterson 220394-4339
+# VEL113F
+
 import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
@@ -5,8 +8,8 @@ import matplotlib.pyplot as plt
 
 prcro = 0.8
 prmut = 0.05
-ngen = 5000
-npop = 50
+ngen = 20000
+npop = 20
 od = 132
 coords = np.array([         #[lng from, lat from, lng to, lat to]
 [-18.2666666667 ,65.9666666667  ,-18.35         ,66.0333333333  ],
@@ -379,7 +382,7 @@ linestring = "\nLINESTRING(-18.18453232456968394 65.88300321589102282,"
 for h in range(0,od):
     linestring += str(coords[best[h]][0]) + " " + str(coords[best[h]][1]) + "," + str(coords[best[h]][2]) + " " + str(coords[best[h]][3])+","
 linestring = linestring +'-14.98470024590859495 66.65726869659157217)\n'
-f1=open('./ERoutput/ER_LIN-'+str(bestPI)+'.txt', 'a+')
+f1=open('./'+str(bestPI)+'.txt', 'a+')
 f1.write(str(bestPI))
 f1.write("\n"+str(best))
 f1.write(linestring)
@@ -391,10 +394,11 @@ plt.plot(np.arange(1,endPI.size+1),endPI)
 plt.ylabel('Performance Index')
 plt.xlabel('Generation')
 plt.xticks(np.arange(1,endPI.size+1,ngen/10))
-plt.savefig('./ERoutput/ER_LIN-'+str(bestPI)+'.png')
+plt.savefig('./'+str(bestPI)+'.png')
 
 
 
 
 ### TODOS
 # Comment
+# lin kernighan heuristic
